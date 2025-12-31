@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import ctypes
 import importlib
 import os
 import sys
@@ -23,16 +22,6 @@ import unittest
 import gki
 import namespace
 import net_test
-
-# man 2 personality
-personality = ctypes.CDLL(None).personality
-personality.restype = ctypes.c_int
-personality.argtypes = [ctypes.c_ulong]
-
-# From Linux kernel's include/uapi/linux/personality.h
-PER_QUERY = 0xFFFFFFFF
-PER_LINUX = 0
-PER_LINUX32 = 8
 
 all_test_modules = [
     'anycast_test',
@@ -62,15 +51,8 @@ all_test_modules = [
 
 
 def RunTests(modules_to_test):
-  uname = os.uname()
-  linux = uname.sysname
-  kver = uname.release
-  arch = uname.machine
-  p = personality(PER_LINUX)
-  true_arch = os.uname().machine
-  personality(p)
-  print('Running on %s %s %s %s/%s-%sbit%s%s'
-        % (linux, kver, net_test.LINUX_VERSION, true_arch, arch,
+  print('Running on %s %s %s %s-%sbit%s%s'
+        % (os.uname()[0], os.uname()[2], net_test.LINUX_VERSION, os.uname()[4],
            '64' if sys.maxsize > 0x7FFFFFFF else '32',
            ' GKI' if gki.IS_GKI else '', ' GSI' if net_test.IS_GSI else ''),
         file=sys.stderr)

@@ -14,6 +14,10 @@
 		<value type="bool">y</value>
 	</config>
 	<config>
+		<key>CONFIG_CPU_SW_DOMAIN_PAN</key>
+		<value type="bool">y</value>
+	</config>
+	<config>
 		<key>CONFIG_DEVKMEM</key>
 		<value type="bool">n</value>
 	</config>

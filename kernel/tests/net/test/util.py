@@ -12,28 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Utilities for kernel net tests."""
-
-import ctypes
-
-
-def GetSysprop(name):
-  PROP_VALUE_MAX = 92
-  libc = ctypes.CDLL(ctypes.util.find_library("c"), use_errno=True)
-  name = ctypes.create_string_buffer(name)
-  value = ctypes.create_string_buffer(PROP_VALUE_MAX)
-  libc.__system_property_get(name, value)
-  return value.value
-
-
-def VendorApiLevelIsAtLeast(min_level):
-  try:
-    level = int(GetSysprop(b"ro.vendor.api_level"))
-  except AttributeError:
-    return True
-  return level >= min_level
-
-
 def GetPadLength(block_size, length):
   return (block_size - (length % block_size)) % block_size
 

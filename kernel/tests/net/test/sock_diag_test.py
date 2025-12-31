@@ -588,11 +588,6 @@ class SockDestroyTcpTest(tcp_test.TcpBaseTest, SockDiagBaseTest):
     super(SockDestroyTcpTest, self).setUp()
     self.netid = random.choice(list(self.tuns.keys()))
 
-  def ExpectRst(self, msg):
-    desc, rst = self.RstPacket()
-    msg = "%s: expecting %s: " % (msg, desc)
-    self.ExpectPacketOn(self.netid, msg, rst)
-
   def CheckRstOnClose(self, sock, req, expect_reset, msg, do_close=True):
     """Closes the socket and checks whether a RST is sent or not."""
     if sock is not None:
@@ -604,7 +599,9 @@ class SockDestroyTcpTest(tcp_test.TcpBaseTest, SockDiagBaseTest):
       self.sock_diag.CloseSocket(req)
 
     if expect_reset:
-      self.ExpectRst(msg)
+      desc, rst = self.RstPacket()
+      msg = "%s: expecting %s: " % (msg, desc)
+      self.ExpectPacketOn(self.netid, msg, rst)
     else:
       msg = "%s: " % msg
       self.ExpectNoPacketsOn(self.netid, msg)
@@ -639,31 +636,19 @@ class SockDestroyTcpTest(tcp_test.TcpBaseTest, SockDiagBaseTest):
       # Close the socket and check that it goes into FIN_WAIT1 and sends a FIN.
       net_test.EnableFinWait(self.accepted)
       self.accepted.close()
-      self.accepted = None
+      del self.accepted
       diag_req.states = 1 << tcp_test.TCP_FIN_WAIT1
       diag_msg, attrs = self.sock_diag.GetSockInfo(diag_req)
       self.assertEqual(tcp_test.TCP_FIN_WAIT1, diag_msg.state)
       desc, fin = self.FinPacket()
-      msg = "Closing FIN_WAIT1 socket"
-      self.ExpectPacketOn(self.netid, msg, fin)
+      self.ExpectPacketOn(self.netid, "Closing FIN_WAIT1 socket", fin)
 
-      # Destroy the socket.
-      self.sock_diag.CloseSocketFromFd(self.s)
-      self.assertRaisesErrno(EINVAL, self.s.accept)
-      try:
-        diag_msg, attrs = self.sock_diag.GetSockInfo(diag_req)
-      except Error as e:
-        # Newer kernels will have closed the socket and sent a RST.
-        self.assertEqual(ENOENT, e.errno)
-        self.ExpectRst(msg)
-        self.CloseSockets()
-        return
+      # Destroy the socket and expect no RST.
+      self.CheckRstOnClose(None, diag_req, False, "Closing FIN_WAIT1 socket")
+      diag_msg, attrs = self.sock_diag.GetSockInfo(diag_req)
 
-      # Older kernels don't support closing FIN_WAIT1 sockets.
-      # Check that no RST is sent and that the socket is still in FIN_WAIT1, and
-      # advances to FIN_WAIT2 if the FIN is ACked.
-      msg = "%s: " % msg
-      self.ExpectNoPacketsOn(self.netid, msg)
+      # The socket is still there in FIN_WAIT1: SOCK_DESTROY did nothing
+      # because userspace had already closed it.
       self.assertEqual(tcp_test.TCP_FIN_WAIT1, diag_msg.state)
 
       # ACK the FIN so we don't trip over retransmits in future tests.

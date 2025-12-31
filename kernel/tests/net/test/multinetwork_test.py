@@ -599,8 +599,6 @@ class RIOTest(multinetwork_base.MultiNetworkBaseTest):
       self.SetAcceptRaMinLft(0)
     if multinetwork_base.HAVE_RA_HONOR_PIO_LIFE:
       self.SetRaHonorPioLife(0)
-    if multinetwork_base.HAVE_RA_HONOR_PIO_PFLAG:
-      self.SetRaHonorPioPflag(0)
 
   def GetRoutingTable(self):
     if multinetwork_base.HAVE_AUTOCONF_TABLE:
@@ -630,10 +628,6 @@ class RIOTest(multinetwork_base.MultiNetworkBaseTest):
   def SetAcceptRaMinLft(self, min_lft):
     self.SetSysctl(
         "/proc/sys/net/ipv6/conf/%s/accept_ra_min_lft" % self.IFACE, min_lft)
-
-  def SetRaHonorPioPflag(self, val):
-    self.SetSysctl(
-        "/proc/sys/net/ipv6/conf/%s/ra_honor_pio_pflag" % self.IFACE, val)
 
   def GetAcceptRaMinLft(self):
     return int(self.GetSysctl(
@@ -927,41 +921,11 @@ class RIOTest(multinetwork_base.MultiNetworkBaseTest):
     time.sleep(0.1) # Give the kernel time to notice our RA
     self.assertFalse(self.FindRoutesWithDestination(PREFIX))
 
-  @unittest.skipUnless(multinetwork_base.HAVE_RA_HONOR_PIO_PFLAG,
-                       "needs support for ra_honor_pio_pflag")
-  def testPioPflag(self):
-    self.SetRaHonorPioPflag(1);
-
-    # Test setup has sent an initial RA -- expire it.
-    self.SendRA(self.NETID, routerlft=0, piolft=0)
-    time.sleep(0.1) # Give the kernel time to notice our RA
-    # Check that the prefix route was deleted.
-    prefixroutes = self.FindRoutesWithDestination(self.OnlinkPrefix(6, self.NETID))
-    self.assertEqual([], prefixroutes)
-
-    # Sending a 0-lifetime PIO does not cause the address to be deleted, see
-    # rfc2462#section-5.5.3.
-    address = self.MyAddress(6, self.NETID)
-    self.iproute.DelAddress(address, 64, self.ifindices[self.NETID])
-
-    # PIO with p-flag is ignored
-    self.SendRA(self.NETID, piopflag=1)
-    time.sleep(0.1) # Give the kernel time to notice our RA
-    self.assertIsNone(self.MyAddress(6, self.NETID))
-
-    self.SetRaHonorPioPflag(0);
-    # PIO with p-flag is processed
-    self.SendRA(self.NETID, piopflag=1)
-    time.sleep(0.1) # Give the kernel time to notice our RA
-    self.assertIsNotNone(self.MyAddress(6, self.NETID))
-
 
 class RATest(multinetwork_base.MultiNetworkBaseTest):
 
   ND_ROUTER_ADVERT = 134
-  ND_OPT_PIO = 3
   ND_OPT_PREF64 = 38
-  NDOptHeader = cstruct.Struct("ndopt_header", "!BB", "type length")
   Pref64Option = cstruct.Struct("pref64_option", "!BBH12s",
                                 "type length lft_plc prefix")
 
@@ -1082,56 +1046,26 @@ class RATest(multinetwork_base.MultiNetworkBaseTest):
     # Check that we get an an RTM_NEWNDUSEROPT message on the socket with the
     # expected option.
     csocket.SetSocketTimeout(s.sock, 100)
-
-    needPIO = multinetwork_base.HAVE_USEROPT_PIO_FIX
-    needPref64 = True
-
-    while needPIO or needPref64:
-      try:
-        data = s._Recv()
-      except IOError as e:
-        self.fail("Should have received an RTM_NEWNDUSEROPT message. "
-                  "Please ensure the kernel supports receiving the "
-                  "PREF64 RA option. Error: %s" % e)
-      # Check that the message is received correctly.
-      nlmsghdr, data = cstruct.Read(data, netlink.NLMsgHdr)
-      self.assertEqual(iproute.RTM_NEWNDUSEROPT, nlmsghdr.type)
-
-      # print("data=[%s]\n" % data)
-
-      # Check the option contents.
-      ndopthdr, data = cstruct.Read(data, iproute.NdUseroptMsg)
-      self.assertEqual(AF_INET6, ndopthdr.family)
-      self.assertEqual(self.ND_ROUTER_ADVERT, ndopthdr.icmp_type)
-      self.assertEqual(0, ndopthdr.icmp_code)
-
-      self.assertLessEqual(ndopthdr.opts_len, len(data))
-      data, leftover = data[:ndopthdr.opts_len], data[ndopthdr.opts_len:]
-
-      # print("ndopthdr=[%s] data=[%s] leftover=[%s]" % (ndopthdr, data, leftover))
-
-      while data:
-        # print("data2=[%s]\n" % data)
-
-        header_opt = self.NDOptHeader(data)
-        self.assertNotEqual(header_opt.length, 0)
-        self.assertLessEqual(header_opt.length * 8, len(data))
-        payload, data = data[:header_opt.length * 8], data[header_opt.length * 8:]
-
-        # print("type=%d len=%d payload[%s]\n" % (header_opt.type, header_opt.length * 8, payload))
-
-        if header_opt.type == self.ND_OPT_PIO:
-          needPIO = False
-        elif header_opt.type == self.ND_OPT_PREF64:
-          needPref64 = False
-          self.assertEqual(len(opt), len(payload))
-          self.assertEqual(opt, self.Pref64Option(payload))
-        else:
-          # cannot happen: no other options we generate are currently considered user options
-          assert False
-
-    # we only ever reach here if we find all options we need
+    try:
+      data = s._Recv()
+    except IOError as e:
+      self.fail("Should have received an RTM_NEWNDUSEROPT message. "
+                "Please ensure the kernel supports receiving the "
+                "PREF64 RA option. Error: %s" % e)
     s.close()
+
+    # Check that the message is received correctly.
+    nlmsghdr, data = cstruct.Read(data, netlink.NLMsgHdr)
+    self.assertEqual(iproute.RTM_NEWNDUSEROPT, nlmsghdr.type)
+
+    # Check the option contents.
+    ndopthdr, data = cstruct.Read(data, iproute.NdUseroptMsg)
+    self.assertEqual(AF_INET6, ndopthdr.family)
+    self.assertEqual(self.ND_ROUTER_ADVERT, ndopthdr.icmp_type)
+    self.assertEqual(len(opt), ndopthdr.opts_len)
+
+    actual_opt = self.Pref64Option(data)
+    self.assertEqual(opt, actual_opt)
 
   def testRaFlags(self):
     def GetInterfaceIpv6Flags(iface):

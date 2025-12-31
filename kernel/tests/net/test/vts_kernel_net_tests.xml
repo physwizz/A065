@@ -26,7 +26,5 @@
     <test class="com.android.tradefed.testtype.binary.ExecutableTargetTest" >
         <option name="per-binary-timeout" value="10m" />
         <option name="test-command-line" key="vts_kernel_net_tests" value="/data/local/tmp/vts_kernel_net_tests/kernel_net_tests_bin" />
-        <!-- parse the results with python unit test format -->
-        <option name="parse-python-unit-test" value="true" />
     </test>
 </configuration>

@@ -30,9 +30,7 @@ def check_call(*args, **kwargs):
     subprocess.check_call(*args, **kwargs)
 
 def replace_configs_module_name(current_release, new_release, file_path):
-    # TODO(b/355580919): Remove the pattern '[0-9]+\\.next' by replacing the
-    # version placeholder with 'next'.
-    check_call("sed -i'' -E 's/\"kernel_config_{}_([0-9]+\\.[0-9]+|[0-9]+\\.next|next)\"/\"kernel_config_{}_\\1\"/g' {}"
+    check_call("sed -i'' -E 's/\"kernel_config_{}_([0-9.]*)\"/\"kernel_config_{}_\\1\"/g' {}"
                 .format(current_release, new_release, file_path), shell=True)
 
 class Bump(object):

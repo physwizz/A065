@@ -96,6 +96,15 @@ class KernelFeatureTest(net_test.NetworkTest):
   def testIsGKI(self):
     pass
 
+  @unittest.skipUnless(not net_test.IS_GSI and not gki.IS_GKI, "GSI or GKI")
+  def testMinRequiredKernelVersion(self):
+    self.assertTrue(net_test.KernelAtLeast([(4, 19, 236),
+                                            (5, 4, 186),
+                                            (5, 10, 199),
+                                            (5, 15, 136),
+                                            (6, 1, 57)]),
+                    "%s [%s] is too old." % (os.uname()[2], os.uname()[4]))
+
 
 if __name__ == "__main__":
   unittest.main()

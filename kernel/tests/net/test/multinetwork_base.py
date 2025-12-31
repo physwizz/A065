@@ -57,7 +57,6 @@ AUTOCONF_TABLE_SYSCTL = "/proc/sys/net/ipv6/conf/default/accept_ra_rt_table"
 IPV4_MARK_REFLECT_SYSCTL = "/proc/sys/net/ipv4/fwmark_reflect"
 IPV6_MARK_REFLECT_SYSCTL = "/proc/sys/net/ipv6/fwmark_reflect"
 RA_HONOR_PIO_LIFE_SYSCTL = "/proc/sys/net/ipv6/conf/default/ra_honor_pio_life"
-RA_HONOR_PIO_PFLAG = "/proc/sys/net/ipv6/conf/default/ra_honor_pio_pflag"
 
 HAVE_ACCEPT_RA_MIN_LFT = (os.path.isfile(ACCEPT_RA_MIN_LFT_SYSCTL) or
                           net_test.NonGXI(5, 10) or
@@ -66,14 +65,6 @@ HAVE_ACCEPT_RA_MIN_LFT = (os.path.isfile(ACCEPT_RA_MIN_LFT_SYSCTL) or
 HAVE_AUTOCONF_TABLE = os.path.isfile(AUTOCONF_TABLE_SYSCTL)
 HAVE_RA_HONOR_PIO_LIFE = (os.path.isfile(RA_HONOR_PIO_LIFE_SYSCTL) or
                           net_test.KernelAtLeast([(6, 7, 0)]))
-HAVE_RA_HONOR_PIO_PFLAG = (os.path.isfile(RA_HONOR_PIO_PFLAG) or
-                           net_test.KernelAtLeast([(6, 12, 0)]))
-
-HAVE_USEROPT_PIO_FIX = net_test.KernelAtLeast([(4, 19, 320), (5, 4, 282),
-                                               (5, 10, 224), (5, 15, 165),
-                                               (6, 1, 104), (6, 6, 45),
-                                               (6, 9, 13), (6, 10, 4),
-                                               (6, 11, 0)])
 
 
 class ConfigurationError(AssertionError):
@@ -253,7 +244,7 @@ class MultiNetworkBaseTest(net_test.NetworkTest):
 
   @classmethod
   def SendRA(cls, netid, retranstimer=None, reachabletime=0, routerlft=RA_VALIDITY,
-             piolft=RA_VALIDITY, m=0, o=0, piopflag=0, options=()):
+             piolft=RA_VALIDITY, m=0, o=0, options=()):
     macaddr = cls.RouterMacAddress(netid)
     lladdr = cls._RouterAddress(netid, 6)
 
@@ -268,8 +259,6 @@ class MultiNetworkBaseTest(net_test.NetworkTest):
     if not HAVE_AUTOCONF_TABLE:
       routerlft = 0
 
-    res1 = 0x10 if piopflag else 0
-
     ra = (scapy.Ether(src=macaddr, dst="33:33:00:00:00:01") /
           scapy.IPv6(src=lladdr, hlim=255) /
           scapy.ICMPv6ND_RA(reachabletime=reachabletime,
@@ -279,7 +268,7 @@ class MultiNetworkBaseTest(net_test.NetworkTest):
           scapy.ICMPv6NDOptSrcLLAddr(lladdr=macaddr) /
           scapy.ICMPv6NDOptPrefixInfo(prefix=cls.OnlinkPrefix(6, netid),
                                       prefixlen=cls.OnlinkPrefixLen(6),
-                                      L=1, A=1, res1=res1,
+                                      L=1, A=1,
                                       validlifetime=piolft,
                                       preferredlifetime=piolft))
     for option in options:

@@ -178,14 +178,8 @@ while [[ -n "$1" ]]; do
   elif [[ "$1" == "--nobuild" ]]; then
     nobuild=1
     shift
-  elif [[ "$1" == "--build" ]]; then
-    nobuild=0
-    shift
   elif [[ "$1" == "--norun" ]]; then
     norun=1
-    shift
-  elif [[ "$1" == "--run" ]]; then
-    norun=0
     shift
   elif [[ "$1" == "--verbose" ]]; then
     verbose=1

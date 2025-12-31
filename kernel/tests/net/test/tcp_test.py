@@ -40,20 +40,13 @@ TCP_NOT_YET_ACCEPTED = -1
 
 class TcpBaseTest(multinetwork_base.MultiNetworkBaseTest):
 
-  def __init__(self, *args, **kwargs):
-    super().__init__(*args, **kwargs)
-    self.accepted = None
-    self.s = None
-    self.last_packet = None
-    self.sent_fin = False
-
   def CloseSockets(self):
-    if self.accepted:
+    if hasattr(self, "accepted"):
       self.accepted.close()
-      self.accepted = None
-    if self.s:
+      del self.accepted
+    if hasattr(self, "s"):
       self.s.close()
-      self.s = None
+      del self.s
 
   def tearDown(self):
     self.CloseSockets()
@@ -88,15 +81,12 @@ class TcpBaseTest(multinetwork_base.MultiNetworkBaseTest):
 
   def RstPacket(self):
     return packets.RST(self.version, self.myaddr, self.remoteaddr,
-                       self.last_packet, self.sent_fin)
+                       self.last_packet)
 
   def FinPacket(self):
     return packets.FIN(self.version, self.myaddr, self.remoteaddr,
                        self.last_packet)
 
-  def ExpectPacketOn(self, netid, msg, pkt):
-    self.sent_fin |= (pkt.getlayer("TCP").flags & packets.TCP_FIN) != 0
-    return super(TcpBaseTest, self).ExpectPacketOn(netid, msg, pkt)
 
   def IncomingConnection(self, version, end_state, netid):
     self.s = self.OpenListenSocket(version, netid)
