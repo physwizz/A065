@@ -45,28 +45,4 @@
    - Module : out/target/product/a06/obj/KLEAF_OBJ/dist/*/*.ko
 ############################################################################################################################################
 
-WARNING: ../out/target/product/a06/obj/KERNEL_OBJ/build.config loaded without Kleaf hermetic tools.
-    This will become an error in the future.
-WARNING: remove ../vendor/mediatek/kernel_modules/fpsgo_cus from EXT_MODULES, as this dir does not exist!
-WARNING: remove ../vendor/mediatek/kernel_modules/fpsgo_int from EXT_MODULES, as this dir does not exist!
-WARNING: remove ../vendor/mediatek/kernel_modules/sched_cus from EXT_MODULES, as this dir does not exist!
-WARNING: remove #../vendor/mediatek/kernel_modules/sched_int from EXT_MODULES, as this dir does not exist!
-WARNING: remove ../vendor/mediatek/kernel_modules/met_drv_secure_v3 from EXT_MODULES, as this dir does not exist!
-WARNING: remove #../vendor/mediatek/kernel_modules/task_turbo_int from EXT_MODULES, as this dir does not exist!
-WARNING: remove ../vendor/mediatek/kernel_modules/task_turbo_cus from EXT_MODULES, as this dir does not exist!
-WARNING: remove ../vendor/mediatek/kernel_modules/hbt_driver from EXT_MODULES, as this dir does not exist!
-WARNING: remove ../vendor/mediatek/kernel_modules/mtk_input/fingerprint/goodix/5.10 from EXT_MODULES, as this dir does not exist!
-WARNING: remove ../vendor/mediatek/kernel_modules/mtk_input/fingerprint/goodix/4.14 from EXT_MODULES, as this dir does not exist!
-WARNING: remove ../vendor/mediatek/tests/ktf/kernel from EXT_MODULES, as this dir does not exist!
-WARNING: remove ../vendor/mediatek/tests/kernel/ktf_testcase from EXT_MODULES, as this dir does not exist!
-WARNING: remove ../vendor/mediatek/kernel_modules/mtk_input/FT3518U from EXT_MODULES, as this dir does not exist!
-WARNING: remove ../vendor/mediatek/kernel_modules/mtk_input/GT9886 from EXT_MODULES, as this dir does not exist!
-WARNING: remove ../vendor/mediatek/kernel_modules/mtk_input/GT9916 from EXT_MODULES, as this dir does not exist!
-WARNING: remove ../vendor/mediatek/kernel_modules/mtk_input/NT36672C from EXT_MODULES, as this dir does not exist!
-WARNING: remove ../vendor/mediatek/kernel_modules/mtk_input/ST61Y from EXT_MODULES, as this dir does not exist!
-WARNING: remove ../vendor/mediatek/kernel_modules/mtk_input/synaptics_tcm from EXT_MODULES, as this dir does not exist!
-WARNING: remove ../vendor/mediatek/kernel_modules/cpufreq_cus from EXT_MODULES, as this dir does not exist!
-WARNING: remove ../vendor/mediatek/kernel_modules/cpufreq_int from EXT_MODULES, as this dir does not exist!
-WARNING: remove ../vendor/mediatek/kernel_modules/afs_core_cus from EXT_MODULES, as this dir does not exist!
-WARNING: remove ../vendor/mediatek/kernel_modules/afs_core_int from EXT_MODULES, as this dir does not exist!
 
